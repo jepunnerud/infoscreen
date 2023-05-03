@@ -1,9 +1,4 @@
-import axios from "axios";
-import Router from "koa-router";
-
-const eventsURL = "https://lego.abakus.no/api/v1/events/upcoming/";
-
-let eventsCache;
+const eventsURL = "https://lego.abakus.no/api/v1/events";
 
 const dateString = () => {
   const currentDate = new Date();
@@ -18,39 +13,9 @@ const dateString = () => {
 };
 
 const getEventsFromAbakus = async () => {
-  const eventsFromAbakus = await axios.get(eventsURL + dateString());
-  const eventsArray = eventsFromAbakus.data.results;
-
-  const eventsId = [];
-  for (let i = 0; i < eventsArray.length; i += 1) {
-    eventsId.push(eventsArray[i].id);
-  }
-
-  const registrationLink = await Promise.all(
-    eventsId.map((x) => axios.get(eventsURL + x))
-  );
-
-  for (let i = 0; i < registrationLink.length; i += 1) {
-    eventsArray[i].registrationTime =
-      registrationLink[i].data.pools.length > 0
-        ? registrationLink[i].data.pools[0].activationDate
-        : null;
-  }
-  eventsCache = eventsArray;
+  let res = await (await fetch(eventsURL + dateString())).json();
+  console.log(res);
+  return res;
 };
 
 getEventsFromAbakus();
-setInterval(getEventsFromAbakus, 30 * 1000);
-
-const events = async (ctx) => {
-  ctx.body = eventsCache;
-};
-
-// console.log(events);
-
-const router = new Router();
-router.get("/", events);
-
-// export default router;
-
-// console.log(router);
